@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Video Statistics</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .card {
+            margin-top: 20px;
+        }
+
+        .video-embed {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container mt-5">
+        <h2 class="mb-4 text-center">YouTube Video Statistics</h2>
+        <form method="POST" action="/">
+            <div class="form-group">
+                <label for="youtube_url">Enter YouTube Video URL:</label>
+                <input type="url" class="form-control" id="youtube_url" name="youtube_url"
+                    placeholder="https://www.youtube.com/watch?v=VIDEO_ID" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Fetch Statistics</button>
+        </form>
+        {% if video_stats %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h4 class="card-title">{{ video_stats.title }}</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Views:</strong> <span id="viewCount">{{ video_stats.view_count }}</span></p>
+                        <p><strong>Likes:</strong> {{ video_stats.like_count }}</p>
+                        <p><strong>Comments:</strong> {{ video_stats.comment_count }}</p>
+                        <p><strong>Estimated Earnings:</strong> $<span id="estimatedEarnings">{{ estimated_earnings | round(2) }}</span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="video-embed embed-responsive embed-responsive-16by9">
+                            <iframe class="embed-responsive-item"
+                                src="https://www.youtube.com/embed/{{ video_stats.video_id }}" allowfullscreen></iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // JavaScript to periodically update the view count and estimated earnings
+        {% if video_stats %}
+        function updateStats() {
+            fetch('/get_live_view_count?video_id={{ video_stats.video_id }}')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.error) {
+                        document.getElementById('viewCount').textContent = data.view_count;
+                        const cpm = 4.00; // Example CPM value
+                        const earnings = (data.view_count / 1000) * cpm;
+                        document.getElementById('estimatedEarnings').textContent = earnings.toFixed(2);
+                    }
+                });
+        }
+        setInterval(updateStats, 60000); // Update every 60 seconds
+        {% endif %}
+    </script>
+</body>
+
+</html>
